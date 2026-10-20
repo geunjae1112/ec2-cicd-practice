@@ -1,0 +1,19 @@
+[Unit]
+Description=Node.js EC2 CI/CD practice
+After=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/ec2-cicd-current
+Environment=NODE_ENV=production
+Environment=PORT=3000
+ExecStart=/usr/bin/node /home/ec2-user/ec2-cicd-current/dist/server.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
