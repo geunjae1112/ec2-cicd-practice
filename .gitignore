@@ -1,0 +1,8 @@
+node_modules/
+dist/
+Logs/
+.env
+*.pem
+*.key
+*.zip
+*.log

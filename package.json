@@ -1,0 +1,12 @@
+{
+  "name": "ec2-cicd-practice",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Actions와 AWS EC2 자동 배포 실습",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test test/server.test.js",
+    "build": "node scripts/build.js",
+    "start": "node dist/server.js"
+  }
+}

@@ -1,0 +1,61 @@
+name: Node.js CI-CD to EC2
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ec2-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: 테스트 및 빌드
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Node.js 24 설정
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: 의존성 재현 설치
+        run: npm ci --ignore-scripts
+      - name: 자동 테스트
+        run: npm test
+      - name: 배포 파일 빌드
+        run: npm run build
+
+  deploy:
+    name: EC2 자동 배포
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 배포 전용 SSH 연결로 검증된 커밋 배포
+        shell: bash
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EC2_HOST" =~ ^[a-zA-Z0-9.-]+$ ]] || { echo 'EC2 호스트 설정 오류'; exit 1; }
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/ec2_deploy
+          chmod 600 ~/.ssh/ec2_deploy
+          printf '%s\n' "$EC2_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          trap 'rm -f ~/.ssh/ec2_deploy' EXIT
+          ssh -i ~/.ssh/ec2_deploy -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 "ec2-user@$EC2_HOST" "$COMMIT_SHA"
