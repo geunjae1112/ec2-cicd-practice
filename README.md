@@ -27,3 +27,9 @@ SSH 호스트 키 검증을 활성화한다. 배포 전용 키는 서버에서 �
 [주의] EC2에 배포 권한을 연결하기 전에 실제 대상 서버를 확인한다. 서버는 예제 전용이며 인증이 없는 상태 조회 API만 제공한다.
 운영 환경에서는 HTTPS, 인증, 배포 승인, 로그 보관 정책과 롤백을 추가로 관리해야 한다.
 실제 Actions 성공 여부와 EC2 접속 결과는 제출 증빙에서 확인한다. 로컬 테스트 성공을 원격 성공으로 간주하지 않는다.
+
+## 자동 배포 연결
+GitHub Actions Secrets: EC2_HOST, EC2_SSH_KEY, EC2_KNOWN_HOSTS.
+Repository Variables: DEPLOY_ENABLED=true.
+서버 서비스: ec2-cicd-practice.service. main 변경 후 Actions에서 테스트 및 빌드와 EC2 자동 배포를 모두 확인한다.
+배포 스크립트는 scripts/ec2-deploy.sh, 서비스 정의는 scripts/ec2-cicd-practice.service에 있다.
